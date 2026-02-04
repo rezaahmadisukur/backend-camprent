@@ -1,30 +1,62 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { RegisterUserDto } from './dto/register.dto';
+import * as bcrypt from 'bcrypt';
+import { LoginUserDto } from './dto/login.dto';
+import { JwtService } from '@nestjs/jwt';
+import { GetProfileUserDto } from './dto/get-profile.dto';
 
-export type User =
-  | {
-      userId: number;
-      username: string;
-      password: string;
-    }
-  | undefined;
-
+export interface TGetProfile {
+  user: GetProfileUserDto;
+}
 @Injectable()
 export class UsersService {
-  private readonly users = [
-    {
-      userId: 1,
-      username: 'john',
-      password: 'changeme',
-    },
-    {
-      userId: 2,
-      username: 'maria',
-      password: 'guess',
-    },
-  ];
+  constructor(
+    private prismaService: PrismaService,
+    private jwtService: JwtService,
+  ) {}
 
-  findOne(username: string) {
-    const user = this.users.find((user) => user.username === username);
+  async signUp(registerUserDto: RegisterUserDto) {
+    const hashedPassword = await bcrypt.hash(registerUserDto.password, 10);
+
+    return this.prismaService.users.create({
+      data: {
+        ...registerUserDto,
+        password: hashedPassword,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+      },
+    });
+  }
+
+  async singIn(loginUserDto: LoginUserDto): Promise<{ access_token: string }> {
+    const user = await this.findOne(loginUserDto.email);
+
+    if (!user) throw new UnauthorizedException('User not registered');
+
+    const isMatch = await bcrypt.compare(loginUserDto.password, user.password);
+
+    if (!isMatch) throw new UnauthorizedException('Email or Password is wrong');
+
+    const payload = { sub: user.id, email: user.email };
+    return {
+      access_token: this.jwtService.sign(payload),
+    };
+  }
+
+  me(req: TGetProfile) {
+    return req.user;
+  }
+
+  async findOne(email: string) {
+    const user = await this.prismaService.users.findUnique({
+      where: {
+        email: email,
+      },
+    });
     return user;
   }
 }

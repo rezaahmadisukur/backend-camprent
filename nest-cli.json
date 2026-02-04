@@ -6,6 +6,6 @@
     "deleteOutDir": true
   },
   "generateOptions": {
-    "baseDir": "modules"
+    "baseDir": "infra"
   }
 }

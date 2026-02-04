@@ -1,34 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { UsersService } from '../users/users.service';
-import { JwtService } from '@nestjs/jwt';
-
-export type TUser = {
-  username: string;
-  userId: number;
-};
+import { TGetProfile, UsersService } from '../users/users.service';
+import { RegisterUserDto } from '../users/dto/register.dto';
+import { LoginUserDto } from '../users/dto/login.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private userService: UsersService,
-    private jwtService: JwtService,
-  ) {}
+  constructor(private userService: UsersService) {}
 
-  validateUser(username: string, password: string) {
-    const user = this.userService.findOne(username);
-
-    if (user && user.password === password) {
-      const { password, ...result } = user;
-      return result;
-    }
-
-    return null;
+  async register(registerUserDto: RegisterUserDto) {
+    return await this.userService.signUp(registerUserDto);
   }
 
-  login(user: TUser) {
-    const payload = { username: user.username, sub: user.userId };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+  async login(loginUserDto: LoginUserDto) {
+    return await this.userService.singIn(loginUserDto);
+  }
+
+  getProfile(req: TGetProfile) {
+    return this.userService.me(req);
   }
 }
