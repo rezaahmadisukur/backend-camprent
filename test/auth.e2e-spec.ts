@@ -37,7 +37,9 @@ describe('Authentication & Product (e2e)', () => {
     });
 
     expect(res.status).toBe(201);
-    access_token = res.body.access_token;
+
+    const body = res.body as { access_token: string };
+    access_token = body.access_token;
     expect(access_token).toBeDefined();
   });
 
