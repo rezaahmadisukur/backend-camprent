@@ -24,13 +24,14 @@ export class CategoryController {
     return this.categoryService.create(createCategoryDto);
   }
 
-  @Public()
   @Get()
+  @Public()
   findAll() {
     return this.categoryService.findAll();
   }
 
   @Get(':id')
+  @Public()
   findOne(@Param('id') id: string) {
     return this.categoryService.findOne(+id);
   }
