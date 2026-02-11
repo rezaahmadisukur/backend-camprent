@@ -4,15 +4,17 @@ import {
   Post,
   Body,
   Patch,
-  Param,
   Delete,
   UseGuards,
+  Query,
+  Param,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { JwtAuthGuard } from 'src/infra/auth/jwt-auth.guard';
 import { Public } from 'src/infra/auth/public.decorator';
+import { GetPopularProductDto } from './dto/get-popular-productdto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('product')
@@ -28,6 +30,12 @@ export class ProductController {
   @Public()
   findAll() {
     return this.productService.findAll();
+  }
+
+  @Get('/popular')
+  @Public()
+  findPopular(@Query() getPopularProductDto: GetPopularProductDto) {
+    return this.productService.findPopular(getPopularProductDto);
   }
 
   @Get(':id')

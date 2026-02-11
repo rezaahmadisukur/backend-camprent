@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { PrismaService } from 'src/infra/prisma/prisma.service';
+import { GetPopularProductDto } from './dto/get-popular-productdto';
 
 @Injectable()
 export class ProductService {
@@ -20,9 +21,10 @@ export class ProductService {
       select: {
         id: true,
         name: true,
-        description: true,
-        price: true,
         stock: true,
+        price: true,
+        imageUrl: true,
+        description: true,
         category: {
           select: {
             name: true,
@@ -31,6 +33,29 @@ export class ProductService {
       },
     });
     return products;
+  }
+
+  async findPopular(params: GetPopularProductDto) {
+    const products = await this.prismaService.products.findMany({
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        stock: true,
+        imageUrl: true,
+        description: true,
+        category: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      take: params.limit,
+    });
+    return products.map((product) => ({
+      ...product,
+      price: product.price.toNumber(),
+    }));
   }
 
   async findOne(id: string) {
