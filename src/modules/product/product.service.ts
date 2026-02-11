@@ -76,9 +76,10 @@ export class ProductService {
       select: {
         id: true,
         name: true,
-        description: true,
         price: true,
         stock: true,
+        imageUrl: true,
+        description: true,
         category: {
           select: {
             name: true,
@@ -87,7 +88,10 @@ export class ProductService {
       },
     });
 
-    return product;
+    return {
+      ...product,
+      price: product?.price.toNumber(),
+    };
   }
 
   async update(id: string, updateProductDto: UpdateProductDto) {
