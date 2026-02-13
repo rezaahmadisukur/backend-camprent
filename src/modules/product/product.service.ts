@@ -32,7 +32,10 @@ export class ProductService {
         },
       },
     });
-    return products;
+    return products.map((product) => ({
+      ...product,
+      price: product.price.toNumber(),
+    }));
   }
 
   async findPopular(params: GetPopularProductDto) {
