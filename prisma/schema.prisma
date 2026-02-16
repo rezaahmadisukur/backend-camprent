@@ -23,7 +23,7 @@ model Users {
 }
 
 model Categories {
-  id        Int         @id @default(autoincrement())
+  id        String      @id @default(uuid())
   name      String      @unique
   products  Products[]
   createdAt DateTime    @default(now())
@@ -38,7 +38,7 @@ model Products {
   price       Decimal     @db.Decimal(10, 2)
   stock       Int
   
-  categoryId  Int
+  categoryId  String
   category    Categories  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   
   createdAt   DateTime    @default(now())

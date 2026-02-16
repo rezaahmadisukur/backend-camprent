@@ -4,7 +4,7 @@ import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 export class CreateProductDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name: string = '';
 
   @IsString()
   @IsOptional()
@@ -16,13 +16,12 @@ export class CreateProductDto {
 
   @IsNotEmpty()
   @Type(() => Number)
-  price: number;
+  price: number = 0;
 
   @IsNotEmpty()
   @Type(() => Number)
-  stock: number;
+  stock: number = 0;
 
   @IsNotEmpty()
-  @Type(() => Number)
-  categoryId: number;
+  categoryId: string = '';
 }

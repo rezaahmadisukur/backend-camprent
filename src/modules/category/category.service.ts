@@ -26,7 +26,7 @@ export class CategoryService {
     return categories;
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const category = await this.findById(id);
 
     if (!category) {
@@ -36,7 +36,7 @@ export class CategoryService {
     return category;
   }
 
-  private async findById(id: number) {
+  private async findById(id: string) {
     const category = await this.prismaService.categories.findUnique({
       where: {
         id: id,
@@ -49,7 +49,7 @@ export class CategoryService {
     return category;
   }
 
-  async update(id: number, updateCategoryDto: UpdateCategoryDto) {
+  async update(id: string, updateCategoryDto: UpdateCategoryDto) {
     const category = await this.findById(id);
 
     if (!category) {
@@ -66,7 +66,7 @@ export class CategoryService {
     return updatedCategory;
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     const deleteCategory = await this.prismaService.categories.delete({
       where: {
         id: id,

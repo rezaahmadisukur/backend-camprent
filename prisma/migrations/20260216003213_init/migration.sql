@@ -13,7 +13,7 @@ CREATE TABLE "Users" (
 
 -- CreateTable
 CREATE TABLE "Categories" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE "Products" (
     "imageUrl" TEXT,
     "price" DECIMAL(10,2) NOT NULL,
     "stock" INTEGER NOT NULL,
-    "categoryId" INTEGER NOT NULL,
+    "categoryId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
