@@ -32,8 +32,11 @@ export class ProductService {
     }
 
     if (categoryIds?.length) {
-      whereClause.categoryId = {
-        in: categoryIds,
+      whereClause.category = {
+        name: {
+          in: categoryIds,
+          mode: 'insensitive',
+        },
       };
     }
 
