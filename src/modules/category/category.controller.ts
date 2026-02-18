@@ -11,8 +11,8 @@ import {
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { JwtAuthGuard } from 'src/infra/auth/jwt-auth.guard';
-import { Public } from 'src/infra/auth/public.decorator';
+import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard';
+import { Public } from '@/infra/auth/public.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('category')
