@@ -4,12 +4,14 @@ import {
   Get,
   Post,
   Request,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterUserDto } from '../users/dto/register.dto';
 import { LoginUserDto } from '../users/dto/login.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { type Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -21,8 +23,21 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() loginUserDto: LoginUserDto) {
-    return await this.authService.login(loginUserDto);
+  async login(
+    @Body() loginUserDto: LoginUserDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.login(loginUserDto);
+
+    response.cookie('auth_token', result.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24,
+    });
+
+    return result;
   }
 
   @UseGuards(JwtAuthGuard)
