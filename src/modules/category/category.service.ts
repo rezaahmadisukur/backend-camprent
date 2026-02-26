@@ -23,6 +23,8 @@ export class CategoryService {
         name: true,
       },
     });
+
+    console.log(categories);
     return categories;
   }
 

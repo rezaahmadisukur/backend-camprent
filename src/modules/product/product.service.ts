@@ -5,12 +5,13 @@ import { PrismaService } from '@/infra/prisma/prisma.service';
 import { GetPopularProductDto } from './dto/get-popular-productdto';
 import { GetProductsDto, ProductSortBy } from './dto/get-products.dto';
 import { Prisma } from '@prisma/client';
+import { TCreateProduct, TProduct } from './types/product';
 
 @Injectable()
 export class ProductService {
   constructor(private prismaService: PrismaService) {}
 
-  async create(createProductDto: CreateProductDto) {
+  async create(createProductDto: CreateProductDto): Promise<TCreateProduct> {
     return await this.prismaService.products.create({
       data: {
         ...createProductDto,
@@ -18,7 +19,7 @@ export class ProductService {
     });
   }
 
-  public async findAll(getProductsDto: GetProductsDto) {
+  public async findAll(getProductsDto: GetProductsDto): Promise<TProduct[]> {
     const { limit, categoryIds, sortBy, productName } = getProductsDto;
 
     const whereClause: Prisma.ProductsWhereInput = {};
@@ -70,13 +71,14 @@ export class ProductService {
         },
       },
     });
+
     return products.map((product) => ({
       ...product,
       price: product.price.toNumber(),
     }));
   }
 
-  async findPopular(params: GetPopularProductDto) {
+  async findPopular(params: GetPopularProductDto): Promise<TProduct[]> {
     const products = await this.prismaService.products.findMany({
       select: {
         id: true,
@@ -87,6 +89,7 @@ export class ProductService {
         description: true,
         category: {
           select: {
+            id: true,
             name: true,
           },
         },
@@ -109,7 +112,7 @@ export class ProductService {
     return product;
   }
 
-  private async findById(id: string) {
+  private async findById(id: string): Promise<TProduct> {
     const product = await this.prismaService.products.findUnique({
       where: {
         id: id,
@@ -123,6 +126,7 @@ export class ProductService {
         description: true,
         category: {
           select: {
+            id: true,
             name: true,
           },
         },
