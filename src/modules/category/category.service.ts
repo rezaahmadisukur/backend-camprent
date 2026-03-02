@@ -24,7 +24,6 @@ export class CategoryService {
       },
     });
 
-    console.log(categories);
     return categories;
   }
 
