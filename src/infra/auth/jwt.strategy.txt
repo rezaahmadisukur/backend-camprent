@@ -6,7 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Request } from 'express';
 
 export type TPayload = {
-  sub: number;
+  sub: string;
   email: string;
 };
 
@@ -26,7 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: TPayload) {
-    const user = await this.prismaService.users.findUnique({
+    const user = await this.prismaService.user.findUnique({
       where: {
         id: payload.sub,
       },

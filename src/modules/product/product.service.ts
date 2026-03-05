@@ -12,7 +12,7 @@ export class ProductService {
   constructor(private prismaService: PrismaService) {}
 
   async create(createProductDto: CreateProductDto): Promise<TCreateProduct> {
-    return await this.prismaService.products.create({
+    return await this.prismaService.product.create({
       data: {
         ...createProductDto,
       },
@@ -22,8 +22,8 @@ export class ProductService {
   public async findAll(getProductsDto: GetProductsDto): Promise<TProduct[]> {
     const { limit, categoryIds, sortBy, productName } = getProductsDto;
 
-    const whereClause: Prisma.ProductsWhereInput = {};
-    const orderByClause: Prisma.ProductsOrderByWithRelationInput = {};
+    const whereClause: Prisma.ProductWhereInput = {};
+    const orderByClause: Prisma.ProductOrderByWithRelationInput = {};
 
     if (productName) {
       whereClause.name = {
@@ -52,7 +52,7 @@ export class ProductService {
         break;
     }
 
-    const products = await this.prismaService.products.findMany({
+    const products = await this.prismaService.product.findMany({
       take: limit,
       where: whereClause,
       orderBy: orderByClause,
@@ -79,7 +79,7 @@ export class ProductService {
   }
 
   async findPopular(params: GetPopularProductDto): Promise<TProduct[]> {
-    const products = await this.prismaService.products.findMany({
+    const products = await this.prismaService.product.findMany({
       select: {
         id: true,
         name: true,
@@ -113,7 +113,7 @@ export class ProductService {
   }
 
   private async findById(id: string): Promise<TProduct> {
-    const product = await this.prismaService.products.findUnique({
+    const product = await this.prismaService.product.findUnique({
       where: {
         id: id,
       },
@@ -146,7 +146,7 @@ export class ProductService {
       throw new NotFoundException(`Product Not Found`);
     }
 
-    const updatedProduct = await this.prismaService.products.update({
+    const updatedProduct = await this.prismaService.product.update({
       where: {
         id: id,
       },
@@ -163,7 +163,7 @@ export class ProductService {
       throw new NotFoundException(`Product Not Found`);
     }
 
-    const deletedProduct = this.prismaService.products.delete({
+    const deletedProduct = this.prismaService.product.delete({
       where: {
         id: id,
       },

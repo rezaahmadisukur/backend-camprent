@@ -8,7 +8,7 @@ export class CategoryService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async create(createCategoryDto: CreateCategoryDto) {
-    const newCategory = await this.prismaService.categories.create({
+    const newCategory = await this.prismaService.category.create({
       data: {
         ...createCategoryDto,
       },
@@ -18,7 +18,7 @@ export class CategoryService {
   }
 
   async findAll() {
-    const categories = await this.prismaService.categories.findMany({
+    const categories = await this.prismaService.category.findMany({
       select: {
         name: true,
       },
@@ -38,7 +38,7 @@ export class CategoryService {
   }
 
   private async findById(id: string) {
-    const category = await this.prismaService.categories.findUnique({
+    const category = await this.prismaService.category.findUnique({
       where: {
         id: id,
       },
@@ -57,7 +57,7 @@ export class CategoryService {
       throw new NotFoundException('Category Not Found');
     }
 
-    const updatedCategory = await this.prismaService.categories.update({
+    const updatedCategory = await this.prismaService.category.update({
       where: {
         id: id,
       },
@@ -68,7 +68,7 @@ export class CategoryService {
   }
 
   async remove(id: string) {
-    const deleteCategory = await this.prismaService.categories.delete({
+    const deleteCategory = await this.prismaService.category.delete({
       where: {
         id: id,
       },

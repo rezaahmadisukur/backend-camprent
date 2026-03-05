@@ -12,25 +12,54 @@ datasource db {
   provider = "postgresql"
 }
 
-model Users {
-  id        Int         @id @default(autoincrement())
-  email     String      @unique
-  password  String  
-  name      String?
-  image     String?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+model User {
+  id             String  @id @default(uuid())
+  email          String  @unique
+  password       String
+  name           String?
+  image          String?
+  emailVerified  Boolean  @default(false)
+
+  sessions       Session[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
-model Categories {
+
+model Session {
+  id            String @id @default(cuid())
+  sessionToken  String @unique
+  userId        String
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt     DateTime
+  userAgent     String?
+  ipAddress     String?
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+}
+
+
+model Verification {
+  id          String @id @default(cuid())
+  identifier  String
+  token       String @unique
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@unique([identifier, token])
+}
+
+model Category {
   id        String      @id @default(uuid())
   name      String      @unique
-  products  Products[]
+  products  Product[]
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 }
 
-model Products {
+model Product {
   id          String      @id @default(cuid())
   name        String
   description String?
@@ -39,7 +68,7 @@ model Products {
   stock       Int
   
   categoryId  String
-  category    Categories  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt

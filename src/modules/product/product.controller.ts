@@ -12,12 +12,12 @@ import {
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard';
 import { Public } from '@/infra/auth/public.decorator';
 import { GetPopularProductDto } from './dto/get-popular-productdto';
 import { GetProductsDto } from './dto/get-products.dto';
+import { SessionGuard } from '@/infra/auth/session.guard';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(SessionGuard)
 @Controller('product')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}

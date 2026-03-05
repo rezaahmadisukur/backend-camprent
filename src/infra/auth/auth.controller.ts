@@ -3,15 +3,16 @@ import {
   Controller,
   Get,
   Post,
-  Request,
+  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterUserDto } from '../users/dto/register.dto';
 import { LoginUserDto } from '../users/dto/login.dto';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { type Response } from 'express';
+import type { Request, Response } from 'express';
+import { TGetProfile } from '../users/users.service';
+import { SessionGuard } from './session.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -34,15 +35,15 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24,
+      maxAge: 1000 * 60 * 60 * 24,
     });
 
     return result;
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SessionGuard)
   @Get('profile')
-  getProfile(@Request() req) {
+  getProfile(@Req() req: Request & TGetProfile) {
     return this.authService.getProfile(req);
   }
 }
