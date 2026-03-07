@@ -4,7 +4,6 @@ import { ConfigModule } from '@nestjs/config';
 import { ProductModule } from './modules/product/product.module';
 import { CategoryModule } from './modules/category/category.module';
 import { AuthModule } from './infra/auth/auth.module';
-import { UsersModule } from './infra/users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { jwtConstants } from './infra/auth/constants';
 // import { APP_GUARD } from '@nestjs/core';
@@ -16,7 +15,6 @@ import { jwtConstants } from './infra/auth/constants';
     ProductModule,
     CategoryModule,
     AuthModule,
-    UsersModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',

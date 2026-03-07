@@ -7,11 +7,10 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { RegisterUserDto } from '../users/dto/register.dto';
-import { LoginUserDto } from '../users/dto/login.dto';
+import { AuthService, TGetProfile } from './auth.service';
+import { RegisterUserDto } from './dto/register.dto';
+import { LoginUserDto } from './dto/login.dto';
 import type { Request, Response } from 'express';
-import { TGetProfile } from '../users/users.service';
 import { SessionGuard } from './session.guard';
 
 @Controller('auth')
@@ -28,14 +27,14 @@ export class AuthController {
     @Body() loginUserDto: LoginUserDto,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const result = await this.authService.login(loginUserDto);
+    const result = await this.authService.singIn(loginUserDto);
 
-    response.cookie('auth_token', result.access_token, {
+    response.cookie('auth_token', result.sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 1000 * 60 * 60 * 24,
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
     });
 
     return result;

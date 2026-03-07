@@ -46,8 +46,8 @@ export class SessionGuard implements CanActivate {
     });
 
     // 3. Validation Duration Expiration token
-    if (!session) {
-      throw new UnauthorizedException('Invalid session');
+    if (!session || new Date() > session.expiresAt) {
+      throw new UnauthorizedException('Session has expired or invalid');
     }
 
     // 4. "Magic" Manual: Paste user to request

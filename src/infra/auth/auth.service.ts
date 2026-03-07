@@ -1,17 +1,22 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { TGetProfile, UsersService } from '../users/users.service';
-import { RegisterUserDto } from '../users/dto/register.dto';
-import { LoginUserDto } from '../users/dto/login.dto';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { RegisterUserDto } from './dto/register.dto';
+import { LoginUserDto } from './dto/login.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
+import { GetProfileUserDto } from './dto/get-profile.dto';
+
+export interface TGetProfile extends Request {
+  user: GetProfileUserDto;
+}
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private userService: UsersService,
-    private prismaService: PrismaService,
-  ) {}
+  constructor(private prismaService: PrismaService) {}
 
   async signUp(registerUserDto: RegisterUserDto) {
     // 1. Cek apakah email sudah ada
@@ -62,11 +67,60 @@ export class AuthService {
     });
   }
 
-  async login(loginUserDto: LoginUserDto) {
-    return await this.userService.singIn(loginUserDto);
+  async singIn(loginUserDto: LoginUserDto) {
+    // 1. Find User by email
+    const user = await this.findUserByEmail(loginUserDto.email);
+
+    const isMatch = await bcrypt.compare(loginUserDto.password, user!.password);
+
+    // 2. check user and password
+    if (!user || !isMatch) {
+      throw new UnauthorizedException('Email or Password is wrong');
+    }
+
+    return await this.prismaService.$transaction(async (tx) => {
+      await tx.session.deleteMany({
+        where: { userId: user.id },
+      });
+
+      // 3. Make Session Token for changer the jwt
+      const sessionToken = randomBytes(32).toString('hex');
+
+      // 4. Set Expire the token, may be 1 week
+      const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+
+      // 5. Save to table session
+      const session = await this.prismaService.session.create({
+        data: {
+          sessionToken: sessionToken,
+          expiresAt: expiresAt,
+          userId: user.id,
+        },
+      });
+
+      // 6. Return data, usually token send via cookie in controller
+      return {
+        message: 'Login Successfully',
+        sessionToken: session.sessionToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        },
+      };
+    });
   }
 
   getProfile(req: TGetProfile) {
-    return this.userService.me(req);
+    return req.user;
+  }
+
+  private async findUserByEmail(email: string) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
+    return user;
   }
 }
