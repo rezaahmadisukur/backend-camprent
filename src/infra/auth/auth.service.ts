@@ -9,6 +9,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { GetProfileUserDto } from './dto/get-profile.dto';
+// import * as nodemailer from 'nodemailer';
+// import { EMAIL_PASS, EMAIL_USER } from '@/utils/env';
 
 export interface TGetProfile extends Request {
   user: GetProfileUserDto;
@@ -57,6 +59,9 @@ export class AuthService {
         },
       });
 
+      // Send email verification
+      // await this.sendVerificationEmail(user.email, token);
+
       // Here usually you call MailService for send the email
       // console.log('send email to ${user.email} with token: ${token}');
 
@@ -65,6 +70,61 @@ export class AuthService {
         userId: user.id,
       };
     });
+  }
+
+  // private async sendVerificationEmail(email: string, token: string) {
+  //   const transporter = nodemailer.createTransport({
+  //     service: 'gmail',
+  //     auth: {
+  //       user: EMAIL_USER,
+  //       pass: EMAIL_PASS,
+  //     },
+  //   });
+
+  //   const mailOptions = {
+  //     from: EMAIL_USER,
+  //     to: email,
+  //     subject: 'Verify your email',
+  //     text: `Click this link to verify your email: http://localhost:3000/verify-email?token=${token}`,
+  //   };
+
+  //   await transporter.sendMail(mailOptions);
+  // }
+
+  public async verifyEmail(token: string) {
+    // 1. Check token and expired date
+    const verification = await this.prismaService.verification.findUnique({
+      where: {
+        token: token,
+      },
+    });
+
+    // 2. Check whatever token has been and not expired
+    if (!verification || new Date() > verification.expiresAt) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+
+    // 3. update status token and delete token (use Transaction for safety)
+
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.user.update({
+        where: {
+          email: verification.identifier,
+        },
+        data: {
+          emailVerified: true,
+        },
+      });
+
+      await tx.verification.delete({
+        where: { id: verification.id },
+      });
+    });
+
+    // Send email success verification
+    return {
+      message: 'Email verified successfully',
+    };
   }
 
   async singIn(loginUserDto: LoginUserDto) {
@@ -76,6 +136,13 @@ export class AuthService {
     // 2. check user and password
     if (!user || !isMatch) {
       throw new UnauthorizedException('Email or Password is wrong');
+    }
+
+    // Check if email not verified
+    if (!user.emailVerified) {
+      throw new UnauthorizedException(
+        'Email not verified, check your inbox or email for verification',
+      );
     }
 
     return await this.prismaService.$transaction(async (tx) => {
@@ -109,6 +176,15 @@ export class AuthService {
         },
       };
     });
+  }
+
+  async logout(token: string) {
+    // We will delete the session with token
+    await this.prismaService.session.deleteMany({
+      where: { sessionToken: token },
+    });
+
+    return { message: 'Session deleted from database' };
   }
 
   getProfile(req: TGetProfile) {

@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -22,6 +23,11 @@ export class AuthController {
     return await this.authService.signUp(registerUserDto);
   }
 
+  @Get('verify-email')
+  async verify(@Query('token') token: string) {
+    return await this.authService.verifyEmail(token);
+  }
+
   @Post('login')
   async login(
     @Body() loginUserDto: LoginUserDto,
@@ -38,6 +44,25 @@ export class AuthController {
     });
 
     return result;
+  }
+
+  @UseGuards(SessionGuard)
+  @Post('logout')
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    // 1. Get token in cookie
+    const token: string = req.cookies['auth_token'] as string;
+
+    // 2. delete session via token
+    await this.authService.logout(token);
+
+    // 3. Clear cookies token
+    res.clearCookie('auth_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    });
+
+    return { message: 'Logout successful' };
   }
 
   @UseGuards(SessionGuard)
