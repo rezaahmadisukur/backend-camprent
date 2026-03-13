@@ -11,6 +11,7 @@ import { randomBytes } from 'crypto';
 // import { GetProfileUserDto } from './dto/get-profile.dto';
 import { UpdateProfileUserDto } from './dto/update-profile.dto';
 import { AuthenticatedRequest } from './@types/auth';
+import { UpdatePasswordUserDto } from './dto/update-password';
 // import * as nodemailer from 'nodemailer';
 // import { EMAIL_PASS, EMAIL_USER } from '@/utils/env';
 
@@ -205,7 +206,6 @@ export class AuthService {
     updateProfileUserDto: UpdateProfileUserDto,
     userId: string,
   ) {
-    console.log(updateProfileUserDto);
     if (!userId) {
       throw new UnauthorizedException(
         'User not found, you are not logged in yet',
@@ -225,5 +225,43 @@ export class AuthService {
     });
 
     return updateProfile;
+  }
+
+  public async updatePassword(
+    updatePasswordUserDto: UpdatePasswordUserDto,
+    userId: string,
+  ) {
+    const user = await this.prismaService.user.findUnique({
+      where: { id: userId },
+    });
+
+    const isMatch = await bcrypt.compare(
+      updatePasswordUserDto.oldPassword,
+      user!.password,
+    );
+
+    if (!user && !isMatch) {
+      throw new UnauthorizedException('User not found or Password is wrong');
+    }
+
+    const newPassword = await bcrypt.hash(
+      updatePasswordUserDto.newPassword,
+      10,
+    );
+
+    return await this.prismaService.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { password: newPassword },
+      });
+
+      await tx.session.deleteMany({
+        where: { userId: userId },
+      });
+
+      return {
+        message: 'Update password successfully',
+      };
+    });
   }
 }

@@ -16,6 +16,7 @@ import type { Request, Response } from 'express';
 import { SessionGuard } from './session.guard';
 import { UpdateProfileUserDto } from './dto/update-profile.dto';
 import { type AuthenticatedRequest } from './@types/auth';
+import { UpdatePasswordUserDto } from './dto/update-password';
 
 @Controller('auth')
 export class AuthController {
@@ -82,5 +83,15 @@ export class AuthController {
   ) {
     const userId = req.user.id;
     return this.authService.updateProfile(updateProfileUserDto, userId);
+  }
+
+  @UseGuards(SessionGuard)
+  @Patch('update-password')
+  editPassword(
+    @Req() req: AuthenticatedRequest,
+    @Body() updatePasswordUserDto: UpdatePasswordUserDto,
+  ) {
+    const userId = req.user.id;
+    return this.authService.updatePassword(updatePasswordUserDto, userId);
   }
 }
