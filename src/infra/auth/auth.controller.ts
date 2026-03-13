@@ -2,17 +2,20 @@ import {
   Body,
   Controller,
   Get,
+  Patch,
   Post,
   Query,
   Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { AuthService, TGetProfile } from './auth.service';
+import { AuthService } from './auth.service';
 import { RegisterUserDto } from './dto/register.dto';
 import { LoginUserDto } from './dto/login.dto';
 import type { Request, Response } from 'express';
 import { SessionGuard } from './session.guard';
+import { UpdateProfileUserDto } from './dto/update-profile.dto';
+import { type AuthenticatedRequest } from './@types/auth';
 
 @Controller('auth')
 export class AuthController {
@@ -66,8 +69,18 @@ export class AuthController {
   }
 
   @UseGuards(SessionGuard)
-  @Get('profile')
-  getProfile(@Req() req: Request & TGetProfile) {
-    return this.authService.getProfile(req);
+  @Get('me')
+  getProfile(@Req() req: AuthenticatedRequest) {
+    return this.authService.me(req);
+  }
+
+  @UseGuards(SessionGuard)
+  @Patch('update-profile')
+  editProfile(
+    @Req() req: AuthenticatedRequest,
+    @Body() updateProfileUserDto: UpdateProfileUserDto,
+  ) {
+    const userId = req.user.id;
+    return this.authService.updateProfile(updateProfileUserDto, userId);
   }
 }

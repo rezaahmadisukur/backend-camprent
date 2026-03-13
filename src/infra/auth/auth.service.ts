@@ -8,13 +8,11 @@ import { LoginUserDto } from './dto/login.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
-import { GetProfileUserDto } from './dto/get-profile.dto';
+// import { GetProfileUserDto } from './dto/get-profile.dto';
+import { UpdateProfileUserDto } from './dto/update-profile.dto';
+import { AuthenticatedRequest } from './@types/auth';
 // import * as nodemailer from 'nodemailer';
 // import { EMAIL_PASS, EMAIL_USER } from '@/utils/env';
-
-export interface TGetProfile extends Request {
-  user: GetProfileUserDto;
-}
 
 @Injectable()
 export class AuthService {
@@ -187,8 +185,11 @@ export class AuthService {
     return { message: 'Session deleted from database' };
   }
 
-  getProfile(req: TGetProfile) {
-    return req.user;
+  me(req: AuthenticatedRequest) {
+    return {
+      message: 'Get profile successfully',
+      user: req.user,
+    };
   }
 
   private async findUserByEmail(email: string) {
@@ -198,5 +199,31 @@ export class AuthService {
       },
     });
     return user;
+  }
+
+  public async updateProfile(
+    updateProfileUserDto: UpdateProfileUserDto,
+    userId: string,
+  ) {
+    console.log(updateProfileUserDto);
+    if (!userId) {
+      throw new UnauthorizedException(
+        'User not found, you are not logged in yet',
+      );
+    }
+
+    const updateProfile = await this.prismaService.user.update({
+      where: { id: userId },
+      data: updateProfileUserDto,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        image: true,
+        emailVerified: true,
+      },
+    });
+
+    return updateProfile;
   }
 }

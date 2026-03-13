@@ -5,7 +5,7 @@ import { PrismaService } from '@/infra/prisma/prisma.service';
 import { GetPopularProductDto } from './dto/get-popular-productdto';
 import { GetProductsDto, ProductSortBy } from './dto/get-products.dto';
 import { Prisma } from '@prisma/client';
-import { TCreateProduct, TProduct } from './types/product';
+import { TCreateProduct, TProduct } from './@types/product';
 
 @Injectable()
 export class ProductService {
