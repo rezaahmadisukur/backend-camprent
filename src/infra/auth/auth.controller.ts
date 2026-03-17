@@ -17,6 +17,8 @@ import { SessionGuard } from './session.guard';
 import { UpdateProfileUserDto } from './dto/update-profile.dto';
 import { type AuthenticatedRequest } from './@types/auth';
 import { UpdatePasswordUserDto } from './dto/update-password';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -93,5 +95,15 @@ export class AuthController {
   ) {
     const userId = req.user.id;
     return this.authService.updatePassword(updatePasswordUserDto, userId);
+  }
+
+  @Post('forgot-password')
+  forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
+
+  @Post('reset-password')
+  resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(resetPasswordDto);
   }
 }

@@ -12,6 +12,8 @@ import { randomBytes } from 'crypto';
 import { UpdateProfileUserDto } from './dto/update-profile.dto';
 import { AuthenticatedRequest } from './@types/auth';
 import { UpdatePasswordUserDto } from './dto/update-password';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 // import * as nodemailer from 'nodemailer';
 // import { EMAIL_PASS, EMAIL_USER } from '@/utils/env';
 
@@ -20,6 +22,10 @@ export class AuthService {
   constructor(private prismaService: PrismaService) {}
 
   async signUp(registerUserDto: RegisterUserDto) {
+    if (registerUserDto.password !== registerUserDto.confirmPassword) {
+      throw new BadRequestException('Confirmation password does not match');
+    }
+
     // 1. Cek apakah email sudah ada
     const existingUser = await this.prismaService.user.findUnique({
       where: {
@@ -231,6 +237,13 @@ export class AuthService {
     updatePasswordUserDto: UpdatePasswordUserDto,
     userId: string,
   ) {
+    if (
+      updatePasswordUserDto.newPassword !==
+      updatePasswordUserDto.confirmPassword
+    ) {
+      throw new BadRequestException('Confirmation password does not match');
+    }
+
     const user = await this.prismaService.user.findUnique({
       where: { id: userId },
     });
@@ -261,6 +274,72 @@ export class AuthService {
 
       return {
         message: 'Update password successfully',
+      };
+    });
+  }
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    const user = await this.findUserByEmail(forgotPasswordDto.email);
+
+    if (user) {
+      const token = randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 1000 * 60 * 15);
+
+      await this.prismaService.verification.deleteMany({
+        where: { identifier: user.email },
+      });
+
+      await this.prismaService.verification.create({
+        data: {
+          identifier: user.email,
+          token: token,
+          expiresAt: expiresAt,
+        },
+      });
+    }
+
+    return {
+      message:
+        'If your email is registered, you will receive a password reset link.',
+    };
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    if (resetPasswordDto.newPassword !== resetPasswordDto.confirmPassword) {
+      throw new BadRequestException('Confirmation password does not match');
+    }
+
+    const verification = await this.prismaService.verification.findUnique({
+      where: { token: resetPasswordDto.token },
+    });
+
+    if (!verification || new Date() > verification.expiresAt) {
+      throw new UnauthorizedException('Token is invalid or has expired');
+    }
+
+    const hashedNewPassword = await bcrypt.hash(
+      resetPasswordDto.newPassword,
+      10,
+    );
+
+    return await this.prismaService.$transaction(async (tx) => {
+      const user = await tx.user.update({
+        where: { email: verification.identifier },
+        data: {
+          password: hashedNewPassword,
+        },
+      });
+
+      await tx.verification.delete({
+        where: { id: verification.id },
+      });
+
+      await tx.session.deleteMany({
+        where: { userId: user.id },
+      });
+
+      return {
+        message: 'Reset Password Successfully',
       };
     });
   }

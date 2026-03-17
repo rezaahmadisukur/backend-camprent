@@ -1,13 +1,28 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MinLength,
+} from 'class-validator';
 
 export class RegisterUserDto {
   @IsString()
   @IsNotEmpty()
-  email: string = '';
+  email: string;
+
+  @IsString()
+  @MinLength(8)
+  @IsNotEmpty()
+  @Matches(/^(?=.*[a-z])(?=.*\d).{8,}$/, {
+    message:
+      'at least one lowercase letter and one number, with a minimum length of 8 characters',
+  })
+  password: string;
 
   @IsString()
   @IsNotEmpty()
-  password: string = '';
+  confirmPassword: string;
 
   @IsString()
   @IsOptional()
