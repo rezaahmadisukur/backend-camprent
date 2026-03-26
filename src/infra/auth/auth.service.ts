@@ -14,12 +14,16 @@ import { AuthenticatedRequest } from './@types/auth';
 import { UpdatePasswordUserDto } from './dto/update-password';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { MailerService } from '@nestjs-modules/mailer';
 // import * as nodemailer from 'nodemailer';
 // import { EMAIL_PASS, EMAIL_USER } from '@/utils/env';
 
 @Injectable()
 export class AuthService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly mailerService: MailerService,
+  ) {}
 
   async signUp(registerUserDto: RegisterUserDto) {
     if (registerUserDto.password !== registerUserDto.confirmPassword) {
@@ -65,11 +69,9 @@ export class AuthService {
       });
 
       // Send email verification
-      // await this.sendVerificationEmail(user.email, token);
+      await this.sendVerificationEmail(user.email, token);
 
       // Here usually you call MailService for send the email
-      // console.log('send email to ${user.email} with token: ${token}');
-
       return {
         message: 'Registration Successfully. Check email to verification',
         userId: user.id,
@@ -77,24 +79,27 @@ export class AuthService {
     });
   }
 
-  // private async sendVerificationEmail(email: string, token: string) {
-  //   const transporter = nodemailer.createTransport({
-  //     service: 'gmail',
-  //     auth: {
-  //       user: EMAIL_USER,
-  //       pass: EMAIL_PASS,
-  //     },
-  //   });
+  private async sendVerificationEmail(email: string, token: string) {
+    // 1. Make link verification
+    const verificationUrl = `http://localhost:3000/auth/verify?token=${token}`;
 
-  //   const mailOptions = {
-  //     from: EMAIL_USER,
-  //     to: email,
-  //     subject: 'Verify your email',
-  //     text: `Click this link to verify your email: http://localhost:3000/verify-email?token=${token}`,
-  //   };
-
-  //   await transporter.sendMail(mailOptions);
-  // }
+    // 2. Send email
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'Welcome! Please Verification Your Email',
+      // We use 'html' as changer 'template'
+      html: `
+        <h1>Halo</h1>
+        <p>Thank you for registered. Please click link this bellow for verification your email:</p>
+        <a href="${verificationUrl}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verification Account</a>
+        <p>If button above not function, click this link: ${verificationUrl}</p>
+      `,
+      // template: 'welcome',
+      // context: {
+      //   name: 'John',
+      // },
+    });
+  }
 
   public async verifyEmail(token: string) {
     // 1. Check token and expired date
@@ -278,6 +283,29 @@ export class AuthService {
     });
   }
 
+  private async sendResetPasswordEmail(
+    email: string | undefined,
+    token: string,
+  ) {
+    // 1. Make reset link
+    const resetPasswordUrl = `http://localhost:3000/reset-password?token=${token}`;
+
+    // 2. Send email
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'Permission Reset Password',
+      html: `
+        <h1>Permission Reset Password</h1>
+        <p>We've received a request to reset your account password. Click the button below to continue:</p>
+        <a href="${resetPasswordUrl}" style="background-color: #f44336; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+        Reset My Password
+      </a>
+      <p>This link will expire in 15 minutes.</p>
+      <p>If you don't feel like you requested this, please ignore this email.</p>
+      `,
+    });
+  }
+
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     const user = await this.findUserByEmail(forgotPasswordDto.email);
 
@@ -296,6 +324,8 @@ export class AuthService {
           expiresAt: expiresAt,
         },
       });
+      // Send email to reset verification
+      await this.sendResetPasswordEmail(user?.email, token);
     }
 
     return {
