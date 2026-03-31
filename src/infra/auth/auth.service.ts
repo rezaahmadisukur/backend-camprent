@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { RegisterUserDto } from './dto/register.dto';
@@ -45,7 +46,7 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(registerUserDto.password, 10);
 
     // 3. Run Transaction
-    return await this.prismaService.$transaction(async (tx) => {
+    const result = await this.prismaService.$transaction(async (tx) => {
       // create user
       const user = await tx.user.create({
         data: {
@@ -68,15 +69,21 @@ export class AuthService {
         },
       });
 
-      // Send email verification
-      await this.sendVerificationEmail(user.email, token);
-
-      // Here usually you call MailService for send the email
-      return {
-        message: 'Registration Successfully. Check email to verification',
-        userId: user.id,
-      };
+      return { email: user.email, token: token, userId: user.id };
     });
+
+    try {
+      // Send email verification
+      await this.sendVerificationEmail(result.email, result.token);
+    } catch (error) {
+      console.error(error);
+    }
+
+    // Here usually you call MailService for send the email
+    return {
+      message: 'Registration Successfully. Check email to verification',
+      userId: result.userId,
+    };
   }
 
   private async sendVerificationEmail(email: string, token: string) {
@@ -101,6 +108,7 @@ export class AuthService {
     });
   }
 
+  /** METHOD VERIFICATION EMAIL */
   public async verifyEmail(token: string) {
     // 1. Check token and expired date
     const verification = await this.prismaService.verification.findUnique({
@@ -115,8 +123,15 @@ export class AuthService {
     }
 
     // 3. update status token and delete token (use Transaction for safety)
-
     await this.prismaService.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { email: verification.identifier },
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found!. Please register again');
+      }
+
       await tx.user.update({
         where: {
           email: verification.identifier,
@@ -141,10 +156,14 @@ export class AuthService {
     // 1. Find User by email
     const user = await this.findUserByEmail(loginUserDto.email);
 
-    const isMatch = await bcrypt.compare(loginUserDto.password, user!.password);
+    // 2. check user
+    if (!user) {
+      throw new UnauthorizedException('Email or Password is wrong');
+    }
 
-    // 2. check user and password
-    if (!user || !isMatch) {
+    // check password
+    const isMatch = await bcrypt.compare(loginUserDto.password, user.password);
+    if (!isMatch) {
       throw new UnauthorizedException('Email or Password is wrong');
     }
 
