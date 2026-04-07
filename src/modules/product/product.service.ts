@@ -11,10 +11,23 @@ import { TCreateProduct, TProduct } from './@types/product';
 export class ProductService {
   constructor(private prismaService: PrismaService) {}
 
-  async create(createProductDto: CreateProductDto): Promise<TCreateProduct> {
+  async create(
+    createProductDto: CreateProductDto,
+    userId: string,
+  ): Promise<TCreateProduct> {
     return await this.prismaService.product.create({
       data: {
-        ...createProductDto,
+        name: createProductDto.name,
+        description: createProductDto.description,
+        imageUrl: createProductDto.imageUrl,
+        price: createProductDto.price,
+        stock: createProductDto.stock,
+        category: {
+          connect: { id: createProductDto.categoryId },
+        },
+        user: {
+          connect: { id: userId },
+        },
       },
     });
   }

@@ -21,6 +21,7 @@ model User {
   emailVerified  Boolean  @default(false)
 
   sessions       Session[]
+  products       Product[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
@@ -66,10 +67,13 @@ model Product {
   imageUrl    String?
   price       Decimal     @db.Decimal(10, 2)
   stock       Int
-  
+
   categoryId  String
   category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 }
